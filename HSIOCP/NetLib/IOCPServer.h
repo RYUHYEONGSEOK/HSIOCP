@@ -16,7 +16,7 @@ namespace NetLib
 		virtual E_FUNCTION_RESULT StartServer(void);
 		virtual void EndServer(void);
 
-		bool PostMessages(OUT INT8& msgOperationType, OUT INT32& connectionIndex, char* pBuf, OUT INT16& copySize);
+		bool ProcessNetworkMessages(OUT INT8& msgOperationType, OUT INT32& connectionIndex, char* pBuf, OUT INT16& copySize);
 		void SendPacket(const INT32 connectionIndex, const void* pSendPacket, const INT16 packetSize);
 
 		int GetMaxPacketSize(void) { return m_MaxPacketSize; }
@@ -27,7 +27,7 @@ namespace NetLib
 		int GetServerInfo(const WCHAR* pKey);
 
 		E_FUNCTION_RESULT CreateDirectories(void);
-		bool LoadWorkThreadCount(void);
+		bool CalculateWorkThreadCount(void);
 		E_FUNCTION_RESULT LoadServerInfo(void);
 		E_FUNCTION_RESULT CreateListenSocket(void);
 		E_FUNCTION_RESULT CreateHandleIOCP(void);

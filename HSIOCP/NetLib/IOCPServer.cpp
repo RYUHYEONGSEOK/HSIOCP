@@ -16,7 +16,7 @@ namespace NetLib
 			return result;
 		}
 
-		if (!LoadWorkThreadCount())
+		if (!CalculateWorkThreadCount())
 		{
 			return FUNCTION_RESULT_FAIL_WORKTHREAD_INFO;
 		}
@@ -74,9 +74,8 @@ namespace NetLib
 		{
 			m_IsRunWorkThread = false;
 
-			//TODO: 최흥배. 아래 코드 수정해야 합니다.
-			// joinable 상태라면 스레드 살아 있는 상태이므로 한번 PostQueuedCompletionStatus 보내고, 모든 스레드가  joinable()이 false라면 스레드가 다 종료된 상태이므로 더 이상 스레드 살아 있는지 알아보지 않아도 됩니다.
-
+			// joinable 상태라면 스레드 살아 있는 상태이므로 한번 PostQueuedCompletionStatus 보내고
+			// 모든 스레드가  joinable()이 false라면 스레드가 다 종료된 상태이므로 더 이상 스레드 살아 있는지 알아보지 않아도 됨?
 			for (int i = 0; i < m_WorkThreadCount; ++i)
 			{
 				PostQueuedCompletionStatus(m_hWorkIOCP, 0, 0, nullptr);
@@ -126,9 +125,7 @@ namespace NetLib
 		MiniDump::End();
 	}
 
-	//TODO: 최흥배. 함수 이름을 바꾸었으면 좋겠습니다. ProcessNetworkMessage 등으로 하는게 좋을 것 같습니다.
-	// 현재 이름은 메시지를 어딘가에 보낸다는 의미 같아서 헷갈리네요
-	bool IOCPServer::PostMessages(OUT INT8& msgOperationType, OUT INT32& connectionIndex, char* pBuf, OUT INT16& copySize)
+	bool IOCPServer::ProcessNetworkMessages(OUT INT8& msgOperationType, OUT INT32& connectionIndex, char* pBuf, OUT INT16& copySize)
 	{
 		Message* pMsg = nullptr;
 		Connection* pConnection = nullptr;
@@ -176,8 +173,8 @@ namespace NetLib
 		}
 
 		Connection* pConnection = m_Connections[connectionIndex].get();
-		char* pBuf = nullptr; //TODO: 최흥배. 변수 이름이 어떤 역할을 하는지 좀 더 명확하면 좋겠습니다.
-		auto result = pConnection->PrepareSendPacket(&pBuf, packetSize);
+		char* pSendRingBuf = nullptr;
+		auto result = pConnection->PrepareSendPacket(&pSendRingBuf, packetSize);
 		if (result == FUNCTION_RESULT_FAIL)
 		{
 			return;
@@ -188,7 +185,7 @@ namespace NetLib
 			return;
 		}
 
-		CopyMemory(pBuf, pSendPacket, packetSize);
+		CopyMemory(pSendRingBuf, pSendPacket, packetSize);
 
 		if (!pConnection->PostSend(packetSize))
 		{
@@ -230,8 +227,7 @@ namespace NetLib
 		return FUNCTION_RESULT_SUCCESS;
 	}
 
-	//TODO: 함수 이름이 Load 라고 시작하면 어딘가에서 스레드 수를 읽어 오는 것 같은데 실제 코드는 그렇지 않으니 계산 혹은 분석해서 스레드 수를 설정한다는 의미가 있으면 좋겠습니다.
-	bool IOCPServer::LoadWorkThreadCount(void)
+	bool IOCPServer::CalculateWorkThreadCount(void)
 	{
 		SYSTEM_INFO systemInfo;
 		GetSystemInfo(&systemInfo);
@@ -461,7 +457,7 @@ namespace NetLib
 			OVERLAPPED_EX* pOverlappedEx = nullptr;
 			Connection* pConnection = nullptr;
 
-			//TODO: 최흥배. 모든 GetQueuedCompletionStatus를 GetQueuedCompletionStatusEx 버전을 사용하도록 변경해주세요. 
+			// TODO: 모든 GetQueuedCompletionStatus를 GetQueuedCompletionStatusEx 버전을 사용하도록 변경
 			auto result = GetQueuedCompletionStatus(
 				m_hWorkIOCP,
 				&ioSize,
@@ -566,12 +562,11 @@ namespace NetLib
 
 		pConnection->DisconnectConnection();
 
-		//TODO:최흥배. OP_CLOSE와 OP_CONNECTION 등 세션별로 1개씩 사용하고, 꼭 있어야 하는 것은 세션별로 가지고 있고 사용하면 좋을 것 같습니다.
-		// 아래처럼 Message가 부족하게 되서 예외처러하게 되면 뒤에 파악하기 어려울 것 같습니다.
+		// TODO: OP_CLOSE와 OP_CONNECTION 등 세션별로 1개씩 사용하고, 꼭 있어야 하는 것은 세션별로 가지고 있고 사용
+		// 아래처럼 Message가 부족하게 되서 예외처러하게 되면 뒤에 파악하기 어려울 것 예상
 		Message* pMsg = m_pMsgPool.get()->AllocMsg();
 		if (pMsg == nullptr)
 		{
-			//TODO:최흥배. 로그를 남겨주세요
 			pConnection->ResetConnection();
 			return;
 		}
@@ -592,7 +587,6 @@ namespace NetLib
 			return;
 		}
 
-		//TODO:최흥배. 아래 코드들은 거의 대분 Connection 클래스에 함수를 만들어서 그쪽으로 넣어야 하지 않을까요?. 함수도 너크 크지 않게 하고...
 		pConnection->DecrementAcceptIORefCount();
 
 		SOCKADDR* pLocalSockAddr = nullptr;
@@ -679,7 +673,6 @@ namespace NetLib
 			return;
 		}
 
-		//TODO:최흥배. 아래 코드들은 거의 대분 Connection 클래스에 함수를 만들어서 그쪽으로 넣어야 하지 않을까요?. 함수도 너크 크지 않게 하고...
 		pConnection->DecrementRecvIORefCount();
 
 		short packetSize = 0;
@@ -803,8 +796,6 @@ namespace NetLib
 		{
 			return;
 		}
-
-		//TODO:최흥배. 아래 코드들은 거의 대분 Connection 클래스에 함수를 만들어서 그쪽으로 넣어야 하지 않을까요?. 함수도 너크 크지 않게 하고...
 
 		pConnection->DecrementSendIORefCount();
 

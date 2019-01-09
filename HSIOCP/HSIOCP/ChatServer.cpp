@@ -80,7 +80,7 @@ void ChatServer::PostMessagesThreadFunction(void)
 		INT32 connectionIndex = 0;
 		INT16 copySize = 0;
 
-		if (!m_IOCPServer.PostMessages(operationType, connectionIndex, pBuf, copySize))
+		if (!m_IOCPServer.ProcessNetworkMessages(operationType, connectionIndex, pBuf, copySize))
 		{
 			return;
 		}

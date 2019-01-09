@@ -4,7 +4,6 @@
 
 namespace NetLib
 {
-	//TODO: 최흥배. 콘솔 로그를 사용하지 않고 싶을 때 사용하지 않도록 했으면 합니다.
 	class LogManager
 	{
 	public:

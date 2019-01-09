@@ -21,7 +21,7 @@ namespace NetLib
 		m_ConnectionInfo.RingRecvBuffer.Create(recvRingBufferSize);
 		m_ConnectionInfo.RingSendBuffer.Create(sendRingBufferSize);
 
-		//TODO: 최흥배. BindAcceptExSocket 반환 값이 FALSE 일 때의 처리가 없습니다
+		// TODO: BindAcceptExSocket 반환 값이 FALSE 일 때의 처리 추가
 		BindAcceptExSocket();
 	}
 
@@ -34,9 +34,9 @@ namespace NetLib
 	E_FUNCTION_RESULT Connection::CloseConnection(void)
 	{
 		//소켓만 종료한 채로 전부 처리될 때까지 대기
-		if (m_AcceptIORefCount != 0 || m_RecvIORefCount != 0 || m_SendIORefCount != 0)
+		if ((m_AcceptIORefCount != 0 || m_RecvIORefCount != 0 || m_SendIORefCount != 0) 
+			&& m_ClientSocket != INVALID_SOCKET)
 		{
-			//TODO: 최흥배. DisconnectConnection가 여러번 호출 될 수 있을 것 같은데 DisconnectConnection에서는 처음 호출될 때만 처리하도록 해야합니다.
 			DisconnectConnection();
 			return FUNCTION_RESULT_SUCCESS;
 		}
@@ -105,7 +105,7 @@ namespace NetLib
 
 	E_FUNCTION_RESULT Connection::PostRecv(const char* pNextBuf, const DWORD remainByte)
 	{
-		//TODO: 최흥배. 함수가 너무 크네요. 2~3개로 분리 바랍니다.
+		// TODO: 함수 분리
 		if (m_ConnectionInfo.IsConnect == FALSE || m_ConnectionInfo.pRecvOverlappedEx == nullptr)
 		{
 			g_LogMgr.WriteLog(LOG_ERROR, "IsConnect FALSE or pRecvOverlappedEx is NULL({}) : {} {}", m_ClientSocket, __FUNCTION__, __LINE__);
