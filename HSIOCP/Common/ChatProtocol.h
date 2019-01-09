@@ -1,0 +1,125 @@
+#pragma once
+
+enum PacketID : short
+{
+	ECHO_REQUEST = 101,
+	ECHO_RESPONSE = 102,
+
+	LOGIN_REQUEST = 201,
+	LOGIN_RESPONSE = 202,
+
+	ROOM_NEW_REQUEST = 203,
+	ROOM_NEW_RESPONSE = 204,
+
+	ROOM_ENTER_REQUEST = 206,
+	ROOM_ENTER_RESPONSE = 207,
+
+	ROOM_LEAVE_REQUEST = 209,
+	ROOM_LEAVE_RESPONSE = 210,
+
+	ROOM_CHAT_REQUEST = 214,
+	ROOM_CHAT_RESPONSE = 215,
+	ROOM_CHAT_NOTIFY = 216,
+};
+
+const int USER_ID_LENGTH = 16;
+const int USER_PW_LENGTH = 16;
+const int MAX_CHAT_SIZE = 64;
+
+enum E_PACKET_RESULT : short
+{
+	E_PACKET_RESULT_SUCCESS = 0,
+
+	E_PACKET_RESULT_FAIL = 2,
+	E_PACKET_RESULT_FAIL_SAME_ID = 3,
+	E_PACKET_RESULT_FAIL_MAX_MAKE_ROOM = 4,
+	E_PACKET_RESULT_FAIL_NOT_EXIST_ROOM = 5,
+	E_PACKET_RESULT_FAIL_WRONG_ROOM_NUMBER = 6,
+	E_PACKET_RESULT_FAIL_IN_ROOM = 7,
+	E_PACKET_RESULT_FAIL_IN_LOBBY = 8,
+	E_PACKET_RESULT_FAIL_IN_LOGIN = 9,
+	E_PACKET_RESULT_FAIL_IN_NONE = 10,
+
+	E_PACKET_RESULT_END,
+};
+
+#pragma pack(push, 1)
+struct PACKET_HEADER
+{
+	short PacketLength;
+	short PacketId;
+};
+
+
+struct ECHO_REQUEST_PACKET : public PACKET_HEADER
+{
+	char Contents[MAX_CHAT_SIZE] = { 0, };
+};
+
+struct ECHO_RESPONSE_PACKET : public PACKET_HEADER
+{
+	char Contents[MAX_CHAT_SIZE] = { 0, };
+};
+
+
+struct LOGIN_REQUEST_PACKET : public PACKET_HEADER
+{
+	wchar_t UserID[USER_ID_LENGTH] = { 0, };
+	wchar_t UserPW[USER_PW_LENGTH] = { 0, };
+};
+
+struct LOGIN_RESPONSE_PACKET : public PACKET_HEADER
+{
+	short Result;
+};
+
+
+struct ROOM_NEW_REQUEST_PACKET : public PACKET_HEADER
+{
+};
+
+struct ROOM_NEW_RESPONSE_PACKET : public PACKET_HEADER
+{
+	short Result;
+	int RoomNumber;
+};
+
+
+struct ROOM_ENTER_REQUEST_PACKET : public PACKET_HEADER
+{
+	int RoomNumber;
+};
+
+struct ROOM_ENTER_RESPONSE_PACKET : public PACKET_HEADER
+{
+	short Result;
+};
+
+
+struct ROOM_LEAVE_REQUEST_PACKET : public PACKET_HEADER
+{
+};
+
+struct ROOM_LEAVE_RESPONSE_PACKET : public PACKET_HEADER
+{
+	short Result;
+};
+
+
+struct ROOM_CHAT_REQUEST_PACKET : public PACKET_HEADER
+{
+	wchar_t Message[MAX_CHAT_SIZE] = { 0, };
+};
+
+struct ROOM_CHAT_RESPONSE_PACKET : public PACKET_HEADER
+{
+	short Result;
+};
+
+struct ROOM_CHAT_NOTIFY_PACKET : public PACKET_HEADER
+{
+	wchar_t UserID[USER_ID_LENGTH] = { 0, };
+	wchar_t Message[MAX_CHAT_SIZE] = { 0, };
+};
+
+#pragma pack(pop)
